@@ -1,0 +1,17 @@
+{
+    "files.associations": {
+        "glfw3.h": "c",
+        "stdio.h": "c",
+        "mat4.h": "c",
+        "meshing.h": "c",
+        "blocks.h": "c",
+        "shader.h": "c"
+    },
+    "makefile.launchConfigurations": [
+        {
+            "cwd": "/home/nthony/ccraft",
+            "binaryPath": "/home/nthony/ccraft/ccraft",
+            "binaryArgs": []
+        }
+    ]
+}

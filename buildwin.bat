@@ -1,0 +1,2 @@
+set PATH=%PATH%;glew-2.2.0\lib\x86;glew-2.2.0\bin\Release\x64;glfw-3.4.bin.WIN64\lib-mingw-w64
+make "ADDINCS=-I cglm/include -I glew-2.2.0/include -I glfw-3.4.bin.WIN64/include" "LIBS=glew-2.2.0/lib/Release/x64/glew32.lib glfw-3.4.bin.WIN64/lib-mingw-w64/libglfw3dll.a -lwinmm -lgdi32 -lOpenGL32 -luser32"
