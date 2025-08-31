@@ -4,6 +4,9 @@
 typedef struct 
 {
     Block_t chunk_data[16*16*256];
+    int X;
+    int Y;
+    int inRectangle; 
 } Chunk_t;
 
 typedef struct

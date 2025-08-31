@@ -27,9 +27,66 @@ GLFWwindow* wnd;
 
 char cursor_captured = 0;
 
-ChunkRenderingInstance_t chri;
-Chunk_t test_chunk;
+ChunkRenderingInstance_t chri[9*9];
+Chunk_t chunks[9*9];
 Camera_t player_camera;
+
+void LoadAndGenChunk(Chunk_t* chk, int cx, int cy)
+{
+    for(int i = 0;i < 16*16*256;i++)chk->chunk_data[i] = 0;
+    for(int x = 0;x < 16;x++)
+        for(int z = 0;z < 16;z++)
+        {
+            int y = 0;
+            chk->chunk_data[x + ((z + (y*16))*16)] = ((z+x)%2)+1;
+        }
+
+    chk->chunk_data[5+((5 + (5*16))*16)] = 2;
+    chk->X = cx;
+    chk->Y = cy;
+}
+
+void ProcessChunks()
+{
+    int px = player_camera.cameraPosition[0];
+    int pz = player_camera.cameraPosition[2];
+    int playerChunkX = px / 16;
+    int playerChunkZ = pz / 16;
+    
+    for(int i = 0;i < 9*9;i++)
+    {
+        chunks[i].inRectangle = (
+            (chunks[i].X > (playerChunkX-4)) &&
+            (chunks[i].X < (playerChunkX+4)) &&
+            (chunks[i].Y > (playerChunkZ-4)) &&
+            (chunks[i].Y < (playerChunkZ+4))
+        );
+    }
+
+    for(int x = 0;x < 9;x++)
+    for(int z = 0;z < 9;z++)
+    {
+        int cx = (x+playerChunkX)-4;
+        int cz = (z+playerChunkZ)-4;
+        for(int i = 0;i < 9*9;i++)
+        {
+            if(chunks[i].X == cx && chunks[i].Y == cz)goto finc;
+        }
+        for(int i = 0;i < 9*9;i++)
+        {
+            if(!chunks[i].inRectangle)
+            {
+                LoadAndGenChunk(&chunks[i],cx,cz);
+                ChunkRenderingInstanceMesh(&chri[i]);
+                chunks[i].inRectangle = 1;
+                goto finc;
+            }
+        }
+        finc:;
+    }
+}
+
+
 
 void init()
 {
@@ -38,18 +95,17 @@ void init()
 
     RegisterBlocks();
     GenerateBlockAtlas();
-
-    ChunkRenderingInstanceSetUp(&chri);
-    for(int i = 0;i < 16*16*256;i++)test_chunk.chunk_data[i] = 0;
-    for(int x = 0;x < 16;x++)
-        for(int z = 0;z < 16;z++)
-        {
-            int y = 0;
-            test_chunk.chunk_data[x + ((z + (y*16))*16)] = ((z+x)%2)+1;
-        }
-    test_chunk.chunk_data[5+((5 + (5*16))*16)] = 2;
-    chri.bound_chunk = &test_chunk;
-    ChunkRenderingInstanceMesh(&chri);
+    
+    int i = 0;
+    for(int x = 0;x < 9;x++)
+    for(int z = 0;z < 9;z++)
+    {
+        ChunkRenderingInstanceSetUp(&chri[i]);
+        chri[i].bound_chunk = &chunks[i];
+        LoadAndGenChunk(&chunks[i],x,z);
+        ChunkRenderingInstanceMesh(&chri[i]);
+        i++;
+    }
 
     glm_mat4_identity(projectionMatrix);
     glm_mat4_identity(modelMatrix);
@@ -61,7 +117,7 @@ void render()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     UseShader(current_shader);
 
-    CalculateCamera(&player_camera,0.001f);
+    CalculateCamera(&player_camera,0.002f);
 
     int state = glfwGetKey(wnd, GLFW_KEY_W);
     if (state == GLFW_PRESS)
@@ -83,12 +139,18 @@ void render()
     {
         glm_vec3_sub(player_camera.cameraPosition,player_camera.walkRightVector,player_camera.cameraPosition);
     }
-
+    ProcessChunks();
     ShaderSetMatrix4(GetGlobalUniform(0),modelMatrix);
     ShaderSetMatrix4(GetGlobalUniform(2),projectionMatrix);
     ShaderSetUniform1i(GetGlobalUniform(3),0);
     ApplyCamera(&player_camera);
-    ChunkRenderingInstanceRender(chri);
+     int i = 0;
+    for(int x = 0;x < 9;x++)
+    for(int z = 0;z < 9;z++)
+    {
+        ChunkRenderingInstanceRender(chri[i]);
+        i++;
+    }
 }
 
 void GrabCursor(GLFWwindow* wnd)

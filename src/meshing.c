@@ -17,16 +17,16 @@ typedef struct {
 
 extern int block_count;
 
-void push_vtx(float* vertices, int* vertex_count, float x, float y, float z, int block_id, float u, float v) {
-    vertices[(*vertex_count)++] = x;
+void push_vtx(Chunk_t* chk ,float* vertices, int* vertex_count, float x, float y, float z, int block_id, float u, float v) {
+    vertices[(*vertex_count)++] = x + (chk->X*16);
     vertices[(*vertex_count)++] = y;
-    vertices[(*vertex_count)++] = z;
+    vertices[(*vertex_count)++] = z + (chk->Y*16);
     vertices[(*vertex_count)++] = ((float)(block_id-1)) / ((float)block_count);
     vertices[(*vertex_count)++] = u;
     vertices[(*vertex_count)++] = v;
 }
 
-void push_quad(float* vertices, int* vertex_count, 
+void push_quad(Chunk_t* chk ,float* vertices, int* vertex_count, 
                float x1, float y1, float z1, 
                float x2, float y2, float z2, 
                int axis, bool flip, int block_id) 
@@ -37,45 +37,45 @@ void push_quad(float* vertices, int* vertex_count,
         du = y2 - y1;
         dv = z2 - z1;
         if(!flip) {
-            push_vtx(vertices, vertex_count, x1, y1, z1, block_id, 0.0f, 0.0f);
-            push_vtx(vertices, vertex_count, x1, y2, z1, block_id, du, 0.0f);
-            push_vtx(vertices, vertex_count, x1, y2, z2, block_id, du, dv);
-            push_vtx(vertices, vertex_count, x1, y1, z2, block_id, 0.0f, dv);
+            push_vtx(chk, vertices, vertex_count, x1, y1, z1, block_id, 0.0f, 0.0f);
+            push_vtx(chk, vertices, vertex_count, x1, y2, z1, block_id, du, 0.0f);
+            push_vtx(chk, vertices, vertex_count, x1, y2, z2, block_id, du, dv);
+            push_vtx(chk, vertices, vertex_count, x1, y1, z2, block_id, 0.0f, dv);
         } else {
-            push_vtx(vertices, vertex_count, x1, y1, z1, block_id, 0.0f, 0.0f);
-            push_vtx(vertices, vertex_count, x1, y1, z2, block_id, 0.0f, dv);
-            push_vtx(vertices, vertex_count, x1, y2, z2, block_id, du, dv);
-            push_vtx(vertices, vertex_count, x1, y2, z1, block_id, du, 0.0f);
+            push_vtx(chk, vertices, vertex_count, x1, y1, z1, block_id, 0.0f, 0.0f);
+            push_vtx(chk, vertices, vertex_count, x1, y1, z2, block_id, 0.0f, dv);
+            push_vtx(chk, vertices, vertex_count, x1, y2, z2, block_id, du, dv);
+            push_vtx(chk, vertices, vertex_count, x1, y2, z1, block_id, du, 0.0f);
         }
     } 
     else if(axis == 1) {  // Y axis: UV spans X-Z plane
         du = x2 - x1;
         dv = z2 - z1;
         if(!flip) {
-            push_vtx(vertices, vertex_count, x1, y1, z1, block_id, 0.0f, 0.0f);
-            push_vtx(vertices, vertex_count, x2, y1, z1, block_id, du, 0.0f);
-            push_vtx(vertices, vertex_count, x2, y1, z2, block_id, du, dv);
-            push_vtx(vertices, vertex_count, x1, y1, z2, block_id, 0.0f, dv);
+            push_vtx(chk, vertices, vertex_count, x1, y1, z1, block_id, 0.0f, 0.0f);
+            push_vtx(chk, vertices, vertex_count, x2, y1, z1, block_id, du, 0.0f);
+            push_vtx(chk, vertices, vertex_count, x2, y1, z2, block_id, du, dv);
+            push_vtx(chk, vertices, vertex_count, x1, y1, z2, block_id, 0.0f, dv);
         } else {
-            push_vtx(vertices, vertex_count, x1, y1, z1, block_id, 0.0f, 0.0f);
-            push_vtx(vertices, vertex_count, x1, y1, z2, block_id, 0.0f, dv);
-            push_vtx(vertices, vertex_count, x2, y1, z2, block_id, du, dv);
-            push_vtx(vertices, vertex_count, x2, y1, z1, block_id, du, 0.0f);
+            push_vtx(chk, vertices, vertex_count, x1, y1, z1, block_id, 0.0f, 0.0f);
+            push_vtx(chk, vertices, vertex_count, x1, y1, z2, block_id, 0.0f, dv);
+            push_vtx(chk, vertices, vertex_count, x2, y1, z2, block_id, du, dv);
+            push_vtx(chk, vertices, vertex_count, x2, y1, z1, block_id, du, 0.0f);
         }
     } 
     else if(axis == 2) {  // Z axis: UV spans X-Y plane
         du = x2 - x1;
         dv = y2 - y1;
         if(!flip) {
-            push_vtx(vertices, vertex_count, x1, y1, z1, block_id, 0.0f, 0.0f);
-            push_vtx(vertices, vertex_count, x2, y1, z1, block_id, du, 0.0f);
-            push_vtx(vertices, vertex_count, x2, y2, z1, block_id, du, dv);
-            push_vtx(vertices, vertex_count, x1, y2, z1, block_id, 0.0f, dv);
+            push_vtx(chk, vertices, vertex_count, x1, y1, z1, block_id, 0.0f, 0.0f);
+            push_vtx(chk, vertices, vertex_count, x2, y1, z1, block_id, du, 0.0f);
+            push_vtx(chk, vertices, vertex_count, x2, y2, z1, block_id, du, dv);
+            push_vtx(chk, vertices, vertex_count, x1, y2, z1, block_id, 0.0f, dv);
         } else {
-            push_vtx(vertices, vertex_count, x1, y1, z1, block_id, 0.0f, 0.0f);
-            push_vtx(vertices, vertex_count, x1, y2, z1, block_id, 0.0f, dv);
-            push_vtx(vertices, vertex_count, x2, y2, z1, block_id, du, dv);
-            push_vtx(vertices, vertex_count, x2, y1, z1, block_id, du, 0.0f);
+            push_vtx(chk, vertices, vertex_count, x1, y1, z1, block_id, 0.0f, 0.0f);
+            push_vtx(chk, vertices, vertex_count, x1, y2, z1, block_id, 0.0f, dv);
+            push_vtx(chk, vertices, vertex_count, x2, y2, z1, block_id, du, dv);
+            push_vtx(chk, vertices, vertex_count, x2, y1, z1, block_id, du, 0.0f);
         }
     }
 }
@@ -152,7 +152,7 @@ void mesh_chunk(Chunk_t* chunk, float* vtx_ptr, int* vtx_count, int lod) {
                         int dv[3] = {0, 0, 0};
                         du[u] = w; dv[v] = h;
 
-                        push_quad(vtx_ptr, vtx_count,
+                        push_quad(chunk, vtx_ptr, vtx_count,
                                   x[0], x[1], x[2],
                                   x[0] + du[0] + dv[0],
                                   x[1] + du[1] + dv[1],
