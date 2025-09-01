@@ -31,6 +31,27 @@ ChunkRenderingInstance_t chri[9*9];
 Chunk_t chunks[9*9];
 Camera_t player_camera;
 
+Block_t GetBlock(int x, int y, int z)
+{
+    if(y < 0 || y > 255)return 0;
+
+    int chunkX = x/16;
+    int chunkY = z/16;
+    int blkX = x%16;
+    int blkZ = z%16;
+    int blkY = y;
+
+    for(int i = 0;i < 9*9;i++)
+    {
+        Chunk_t chk = chunks[i];
+        if(chunkX == chk.X && chunkY == chk.Y)
+        {
+            return chk.chunk_data[blkX + ((blkZ + (blkY*16))*16)];
+        }
+    }
+    return 0;
+}
+
 void LoadAndGenChunk(Chunk_t* chk, int cx, int cy)
 {
     for(int i = 0;i < 16*16*256;i++)chk->chunk_data[i] = 0;
@@ -38,7 +59,7 @@ void LoadAndGenChunk(Chunk_t* chk, int cx, int cy)
         for(int z = 0;z < 16;z++)
         {
             int y = 0;
-            chk->chunk_data[x + ((z + (y*16))*16)] = ((z+x)%2)+1;
+            chk->chunk_data[x + ((z + (y*16))*16)] = 1+((x+z)%2);
         }
 
     chk->chunk_data[5+((5 + (5*16))*16)] = 2;
@@ -109,36 +130,100 @@ void init()
 
     glm_mat4_identity(projectionMatrix);
     glm_mat4_identity(modelMatrix);
+
+    player_camera.cameraPosition[1] = 20;
 }
+
+double last_time = 0;
+double last_log = 0;
+
+vec3 playerVelocity = {0,0,0};
+
+void update(double delta)
+{
+}
+
+char bottom_hit = 0;
 
 void render()
 {
+    
     glClearColor(1,1,1,1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     UseShader(current_shader);
 
-    CalculateCamera(&player_camera,0.002f);
+    double currentTime = glfwGetTime();
+    double deltaTime = currentTime - last_time;
+    last_time = currentTime;
+
+    if(currentTime - last_log > 5)
+    {
+        printf("LOG: %f FPS\n",1/deltaTime);
+        last_log = currentTime;
+    }
+    update(deltaTime);
+    CalculateCamera(&player_camera,deltaTime*2);
 
     int state = glfwGetKey(wnd, GLFW_KEY_W);
+    player_camera.walkForwardVector[1] = 0;
+    player_camera.walkRightVector[1] = 0;
+    playerVelocity[0] = 0;
+    playerVelocity[2] = 0;
     if (state == GLFW_PRESS)
     {
-        glm_vec3_add(player_camera.cameraPosition,player_camera.walkForwardVector,player_camera.cameraPosition);
+        glm_vec3_add(playerVelocity,player_camera.walkForwardVector,playerVelocity);
     }
     state = glfwGetKey(wnd, GLFW_KEY_S);
     if (state == GLFW_PRESS)
     {
-        glm_vec3_sub(player_camera.cameraPosition,player_camera.walkForwardVector,player_camera.cameraPosition);
+        glm_vec3_sub(playerVelocity,player_camera.walkForwardVector,playerVelocity);
     }
     state = glfwGetKey(wnd, GLFW_KEY_A);
     if (state == GLFW_PRESS)
     {
-        glm_vec3_add(player_camera.cameraPosition,player_camera.walkRightVector,player_camera.cameraPosition);
+        glm_vec3_add(playerVelocity,player_camera.walkRightVector,playerVelocity);
     }
     state = glfwGetKey(wnd, GLFW_KEY_D);
     if (state == GLFW_PRESS)
     {
-        glm_vec3_sub(player_camera.cameraPosition,player_camera.walkRightVector,player_camera.cameraPosition);
+        glm_vec3_sub(playerVelocity,player_camera.walkRightVector,playerVelocity);
     }
+    state = glfwGetKey(wnd, GLFW_KEY_SPACE);
+    if (state == GLFW_PRESS && bottom_hit)
+    {
+        playerVelocity[1] += 0.02f;
+    }
+
+    playerVelocity[1] = min(playerVelocity[1]-(deltaTime/20),1);
+
+    vec3 new_pos = {player_camera.cameraPosition[0],player_camera.cameraPosition[1],player_camera.cameraPosition[2]};
+    glm_vec3_sub(new_pos,(vec3){0,2,0},new_pos);
+    vec3 old_pos = {new_pos[0],new_pos[1],new_pos[2]};
+    glm_vec3_add(new_pos,playerVelocity,new_pos);
+
+    if(GetBlock(new_pos[0],old_pos[1],old_pos[2]) != 0)
+    {
+        new_pos[0] = old_pos[0];
+    }
+    if(GetBlock(old_pos[0],new_pos[1],old_pos[2]) != 0)
+    {
+        new_pos[1] = old_pos[1];
+        playerVelocity[1] = 0;
+        bottom_hit = 1;
+    }else{
+        bottom_hit = 0;
+    }
+    if(GetBlock(old_pos[0],old_pos[1],new_pos[2]) != 0)
+    {
+        new_pos[2] = old_pos[2];
+    }
+
+    glm_vec3_add(new_pos,(vec3){0,2,0},new_pos);
+    player_camera.cameraPosition[0] = new_pos[0];
+    player_camera.cameraPosition[1] = new_pos[1];
+    player_camera.cameraPosition[2] = new_pos[2];
+
+
     ProcessChunks();
     ShaderSetMatrix4(GetGlobalUniform(0),modelMatrix);
     ShaderSetMatrix4(GetGlobalUniform(2),projectionMatrix);

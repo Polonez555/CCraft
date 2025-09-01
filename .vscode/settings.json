@@ -5,7 +5,8 @@
         "mat4.h": "c",
         "meshing.h": "c",
         "blocks.h": "c",
-        "shader.h": "c"
+        "shader.h": "c",
+        "cmath": "c"
     },
     "makefile.launchConfigurations": [
         {
